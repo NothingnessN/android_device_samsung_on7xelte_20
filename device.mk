@@ -63,12 +63,13 @@ PRODUCT_PACKAGES += \
 TARGET_BOOTANIMATION_HALF_RES := true
 
 # Camera
- PRODUCT_PACKAGES += \
+PRODUCT_PACKAGES += \
     android.hardware.camera.provider@2.4-impl \
     android.hardware.camera.provider@2.4-service \
     camera.device@1.0-impl \
     camera.device@3.2-impl \
     camera.universal7870 \
+    cameraserver \
     libcamera_client_shim \
     libexynoscamera_shim \
     libstagefright_shim \

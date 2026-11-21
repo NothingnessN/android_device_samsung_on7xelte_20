@@ -116,7 +116,9 @@ TARGET_OMX_LEGACY_RESCALING := true
 # Force boottime offset calculation
 TARGET_CAMERA_BOOTTIME_TIMESTAMP := true
 MALLOC_SVELTE_FOR_LIBC32 := true
-TARGET_HAS_LEGACY_CAMERA_HAL1 := true
+# Android 13 needs CameraService in cameraserver (UID 1047), not mediaserver
+# (UID 1013), so CameraServiceProxy can initialize the allowed camera users.
+TARGET_HAS_LEGACY_CAMERA_HAL1 := false
 
 # Charger
 WITH_LINEAGE_CHARGER := false
@@ -243,6 +245,7 @@ TARGET_LD_SHIM_LIBS += \
     /system/lib/libbauthserver.so|/vendor/lib/libbauthtzcommon_shim.so \
     /system/lib/libcamera_client.so|/vendor/lib/libcamera_client_shim.so \
     /system/lib/libexynoscamera.so|/vendor/lib/libexynoscamera_shim.so \
+    /system/lib/libexynoscamera3.so|/vendor/lib/libexynoscamera_shim.so \
     /system/lib/libsec-ril.so|libcutils_shims.so \
     /system/lib/libsec-ril-dsds.so|libcutils_shims.so \
     /system/lib/libsensorservice.so|libshims_libsensorservice.so \

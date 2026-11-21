@@ -59,4 +59,17 @@ setup_vendor "$DEVICE" "$VENDOR" "$LINEAGE_ROOT" false "$CLEAN_VENDOR"
 
 extract "$MY_DIR"/proprietary-files.txt "$SRC" "$SECTION"
 
+# Keep the verified camera ABI fixups when extracting stock or installed blobs.
+# A different blob revision must be analyzed, not patched at guessed offsets.
+CAMERA_BLOBS=()
+for CAMERA_LIB in libexynoscamera.so libexynoscamera3.so; do
+    CAMERA_BLOB="$LINEAGE_ROOT/vendor/$VENDOR/$DEVICE/proprietary/lib/$CAMERA_LIB"
+    if [ -f "$CAMERA_BLOB" ]; then
+        CAMERA_BLOBS+=("$CAMERA_BLOB")
+    fi
+done
+if [ "${#CAMERA_BLOBS[@]}" -ne 0 ]; then
+    python3 "$MY_DIR/camera/fixup_camera_blobs.py" "${CAMERA_BLOBS[@]}"
+fi
+
 "$MY_DIR"/setup-makefiles.sh

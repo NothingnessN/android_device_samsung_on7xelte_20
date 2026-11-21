@@ -22,7 +22,10 @@ LOCAL_SRC_FILES := \
 
 LOCAL_C_INCLUDES := frameworks/native/include
 
-LOCAL_SHARED_LIBRARIES := libgui libui
+LOCAL_SHARED_LIBRARIES := libui libsync
+
+LOCAL_CFLAGS := -fvisibility=hidden
+LOCAL_MULTILIB := 32
 
 LOCAL_MODULE := libexynoscamera_shim
 LOCAL_MODULE_TAGS := optional

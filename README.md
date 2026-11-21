@@ -10,3 +10,8 @@ Copyright (C) 2017 Siddhant Naik
       http://www.apache.org/licenses/LICENSE-2.0
 
 ------------------------------------------------------------------
+
+## Android 13 camera compatibility
+
+See [camera/README.md](camera/README.md) for the camera fixes, blob verification,
+and remote rebuild/device-test checklist.

@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
+#include "LegacyCamera.h"
+
+#include <new>
 #include <ui/GraphicBuffer.h>
 
-extern "C" void _ZN7android13GraphicBufferC1EjjijjjP13native_handleb(
-        const native_handle_t* handle,
-        android::GraphicBuffer::HandleWrapMethod method,
-        uint32_t width,
-        uint32_t height,
-        int format,
-        uint32_t layerCount,
-        uint64_t usage,
-        uint32_t stride);
+static_assert(sizeof(void*) == 4, "These camera blobs require a 32-bit shim");
+static_assert(sizeof(android::GraphicBuffer) <= kExynosGraphicBufferAllocationSize,
+        "Increase the verified blob allocation fixups before using a larger GraphicBuffer");
+static_assert(alignof(android::GraphicBuffer) <= 8,
+        "Legacy operator new cannot provide this GraphicBuffer alignment");
 
-extern "C" void _ZN7android13GraphicBufferC1EjjijjP13native_handleb(
+extern "C" void* exynos_graphicbuffer_ctor(
+        void* buffer,
         uint32_t inWidth,
         uint32_t inHeight,
         int inFormat,
@@ -37,6 +37,9 @@ extern "C" void _ZN7android13GraphicBufferC1EjjijjP13native_handleb(
 {
     android::GraphicBuffer::HandleWrapMethod inMethod =
         (keepOwnership ? android::GraphicBuffer::TAKE_HANDLE : android::GraphicBuffer::WRAP_HANDLE);
-    _ZN7android13GraphicBufferC1EjjijjjP13native_handleb(inHandle, inMethod, inWidth, inHeight,
-        inFormat, static_cast<uint32_t>(1), static_cast<uint64_t>(inUsage), inStride);
+    // Use the real C++ declaration so this and the 64-bit usage argument are
+    // passed with the correct ARM calling convention. No guessed mangled name.
+    new (buffer) android::GraphicBuffer(inHandle, inMethod, inWidth, inHeight,
+        inFormat, 1, static_cast<uint64_t>(inUsage), inStride);
+    return buffer;
 }

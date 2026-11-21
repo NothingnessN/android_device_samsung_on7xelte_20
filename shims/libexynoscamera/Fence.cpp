@@ -14,7 +14,40 @@
  * limitations under the License.
  */
 
-// android::Fence::~Fence()
-extern "C" void _ZN7android5FenceD1Ev() {
-  // no-op, the explicit destructor was replaced with = default;
+#include "LegacyCamera.h"
+
+#include <errno.h>
+#include <new>
+#include <sync/sync.h>
+#include <unistd.h>
+
+extern "C" ExynosLegacyFence* exynos_fence_ctor(ExynosLegacyFence* fence, int fd) {
+    // ARM C++ constructors return this in r0, even though C++ spells them void.
+    return new (fence) ExynosLegacyFence{0, fd};
+}
+
+extern "C" int exynos_fence_wait(const ExynosLegacyFence* fence, int timeout) {
+    if (fence == nullptr) {
+        return -EINVAL;
+    }
+    if (fence->fd == -1) {
+        // HAL3: no acquire/release fence means the buffer is already ready.
+        return 0;
+    }
+    int result = sync_wait(fence->fd, timeout);
+    return result < 0 ? -errno : 0;
+}
+
+extern "C" ExynosLegacyFence* exynos_fence_dtor(ExynosLegacyFence* fence) {
+    if (fence != nullptr) {
+        int fd = fence->fd;
+        fence->fd = -1;
+        if (fd >= 0) {
+            // The constructor takes ownership. Do not retry close after EINTR.
+            close(fd);
+        }
+    }
+    // The vendor's decStrong calls operator delete with r0 immediately after
+    // this destructor. Returning void would let close() clobber that pointer.
+    return fence;
 }
