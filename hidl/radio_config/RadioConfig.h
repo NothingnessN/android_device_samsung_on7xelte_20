@@ -37,8 +37,6 @@ using ::android::hardware::Void;
 using ::android::sp;
 
 struct RadioConfig : public V1_1::IRadioConfig {
-    sp<V1_1::IRadioConfigResponse> mRadioConfigResponse;
-    sp<V1_0::IRadioConfigIndication> mRadioConfigIndication;
     // Methods from ::android::hardware::radio::config::V1_0::IRadioConfig follow.
     Return<void> setResponseFunctions(
         const sp<::android::hardware::radio::config::V1_0::IRadioConfigResponse>&
@@ -51,8 +49,14 @@ struct RadioConfig : public V1_1::IRadioConfig {
     // Methods from ::android::hardware::radio::config::V1_1::IRadioConfig follow.
     Return<void> getPhoneCapability(int32_t serial) override;
     Return<void> setPreferredDataModem(int32_t serial, uint8_t modemId) override;
-    Return<void> setModemsConfig(int32_t serial, const ::android::hardware::radio::config::V1_1::ModemsConfig& modemsConfig) override;
+    Return<void> setModemsConfig(int32_t serial, const V1_1::ModemsConfig& modemsConfig) override;
     Return<void> getModemsConfig(int32_t serial) override;
+
+private:
+    // Keep the 1.0 callback even when the client does not implement 1.1.
+    sp<V1_0::IRadioConfigResponse> mRadioConfigResponse;
+    sp<V1_1::IRadioConfigResponse> mRadioConfigResponseV1_1;
+    sp<V1_0::IRadioConfigIndication> mRadioConfigIndication;
 };
 
 }  // namespace config
@@ -60,4 +64,4 @@ struct RadioConfig : public V1_1::IRadioConfig {
 }  // namespace hardware
 }  // namespace android
 
-#endif  // ANDROID_HARDWARE_RADIO_CONFIG_V1_0_RADIOCONFIG_H
+#endif  // ANDROID_HARDWARE_RADIO_CONFIG_V1_1_RADIOCONFIG_H

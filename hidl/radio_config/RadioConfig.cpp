@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
+#define LOG_TAG "android.hardware.radio.config@1.1-service.on7xelte"
+
 #include "RadioConfig.h"
+
+#include <log/log.h>
 
 namespace android {
 namespace hardware {
@@ -23,52 +27,97 @@ namespace config {
 
 using namespace ::android::hardware::radio::config::V1_1;
 
+namespace {
+
+using ::android::hardware::radio::V1_0::RadioError;
+using ::android::hardware::radio::V1_0::RadioResponseInfo;
+using ::android::hardware::radio::V1_0::RadioResponseType;
+
+RadioResponseInfo unsupportedResponse(int32_t serial) {
+    RadioResponseInfo info{};
+    info.type = RadioResponseType::SOLICITED;
+    info.serial = serial;
+    info.error = RadioError::REQUEST_NOT_SUPPORTED;
+    return info;
+}
+
+void checkResponse(const Return<void>& result) {
+    if (!result.isOk()) {
+        ALOGE("Radio-config response failed: %s", result.description().c_str());
+    }
+}
+
+}  // namespace
+
 // Methods from ::android::hardware::radio::config::V1_1::IRadioConfig follow.
 Return<void> RadioConfig::setResponseFunctions(
     const sp<V1_0::IRadioConfigResponse>& radioConfigResponse,
     const sp<V1_0::IRadioConfigIndication>& radioConfigIndication) {
-    mRadioConfigResponse = V1_1::IRadioConfigResponse::castFrom(radioConfigResponse);
+    mRadioConfigResponse = radioConfigResponse;
+    mRadioConfigResponseV1_1 = nullptr;
+    if (radioConfigResponse != nullptr) {
+        auto responseV1_1 = V1_1::IRadioConfigResponse::castFrom(radioConfigResponse);
+        if (responseV1_1.isOk()) {
+            mRadioConfigResponseV1_1 = responseV1_1;
+        } else {
+            ALOGE("Could not cast radio-config response: %s", responseV1_1.description().c_str());
+        }
+    }
     mRadioConfigIndication = radioConfigIndication;
     return Void();
 }
 
-Return<void> RadioConfig::getSimSlotsStatus(int32_t /* serial */) {
-    hidl_vec<V1_0::SimSlotStatus> slotStatus;
-    ::android::hardware::radio::V1_0::RadioResponseInfo info;
-    mRadioConfigResponse->getSimSlotsStatusResponse(info, slotStatus);
+// This legacy stub has no modem-backed radio-config implementation. Explicitly
+// reject requests instead of reporting an empty SIM inventory or a no-op as
+// success. Android can then retain its legacy RIL/factory-derived configuration.
+Return<void> RadioConfig::getSimSlotsStatus(int32_t serial) {
+    if (mRadioConfigResponse != nullptr) {
+        const hidl_vec<V1_0::SimSlotStatus> slotStatus{};
+        checkResponse(mRadioConfigResponse->getSimSlotsStatusResponse(
+            unsupportedResponse(serial), slotStatus));
+    }
     return Void();
 }
 
-Return<void> RadioConfig::setSimSlotsMapping(int32_t /* serial */,
-                                             const hidl_vec<uint32_t>& /* slotMap */) {
-    ::android::hardware::radio::V1_0::RadioResponseInfo info;
-    mRadioConfigResponse->setSimSlotsMappingResponse(info);
+Return<void> RadioConfig::setSimSlotsMapping(int32_t serial,
+                                            const hidl_vec<uint32_t>& /* slotMap */) {
+    if (mRadioConfigResponse != nullptr) {
+        checkResponse(mRadioConfigResponse->setSimSlotsMappingResponse(unsupportedResponse(serial)));
+    }
     return Void();
 }
 
-Return<void> RadioConfig::getPhoneCapability(int32_t /* serial */) {
-    ::android::hardware::radio::V1_0::RadioResponseInfo info;
-    ::android::hardware::radio::config::V1_1::PhoneCapability capability;
-    mRadioConfigResponse->getPhoneCapabilityResponse(info, capability);
+Return<void> RadioConfig::getPhoneCapability(int32_t serial) {
+    if (mRadioConfigResponseV1_1 != nullptr) {
+        const V1_1::PhoneCapability capability{};
+        checkResponse(mRadioConfigResponseV1_1->getPhoneCapabilityResponse(
+            unsupportedResponse(serial), capability));
+    }
     return Void();
 }
 
-Return<void> RadioConfig::setPreferredDataModem(int32_t /* serial */, uint8_t /* modemId */) {
-    ::android::hardware::radio::V1_0::RadioResponseInfo info;
-    mRadioConfigResponse->setPreferredDataModemResponse(info);
+Return<void> RadioConfig::setPreferredDataModem(int32_t serial, uint8_t /* modemId */) {
+    if (mRadioConfigResponseV1_1 != nullptr) {
+        checkResponse(mRadioConfigResponseV1_1->setPreferredDataModemResponse(
+            unsupportedResponse(serial)));
+    }
     return Void();
 }
 
-Return<void> RadioConfig::setModemsConfig(int32_t /* serial */, const ::android::hardware::radio::config::V1_1::ModemsConfig& /* modemsConfig */) {
-    ::android::hardware::radio::V1_0::RadioResponseInfo info;
-    mRadioConfigResponse->setModemsConfigResponse(info);
+Return<void> RadioConfig::setModemsConfig(int32_t serial,
+                                         const V1_1::ModemsConfig& /* modemsConfig */) {
+    if (mRadioConfigResponseV1_1 != nullptr) {
+        checkResponse(mRadioConfigResponseV1_1->setModemsConfigResponse(unsupportedResponse(serial)));
+    }
     return Void();
 }
 
-Return<void> RadioConfig::getModemsConfig(int32_t /* serial */) {
-    ::android::hardware::radio::V1_0::RadioResponseInfo info;
-    const ::android::hardware::radio::config::V1_1::ModemsConfig config = {};
-    mRadioConfigResponse->getModemsConfigResponse(info, config);
+Return<void> RadioConfig::getModemsConfig(int32_t serial) {
+    if (mRadioConfigResponseV1_1 != nullptr) {
+        const V1_1::ModemsConfig config{};
+        checkResponse(mRadioConfigResponseV1_1->getModemsConfigResponse(
+            unsupportedResponse(serial), config));
+    }
     return Void();
 }
 
