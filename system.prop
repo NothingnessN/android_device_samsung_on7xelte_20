@@ -83,5 +83,7 @@ ro.vndk.version=current
 
 # Bluetooth profiles
 bluetooth.profile.a2dp.source.enabled=true
+bluetooth.profile.avrcp.controller.enabled=true
+bluetooth.profile.avrcp.target.enabled=true
 bluetooth.profile.hfp.ag.enabled=true
 bluetooth.profile.hfp.hf.enabled=true
