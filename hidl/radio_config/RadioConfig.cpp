@@ -67,9 +67,9 @@ Return<void> RadioConfig::setResponseFunctions(
     return Void();
 }
 
-// This legacy stub has no modem-backed radio-config implementation. Explicitly
-// reject requests instead of reporting an empty SIM inventory or a no-op as
-// success. Android can then retain its legacy RIL/factory-derived configuration.
+// This legacy stub has no modem-backed radio-config implementation. Reject
+// unimplemented queries/reconfiguration so Android retains its legacy RIL
+// configuration. Selecting the single existing data modem below is satisfied.
 Return<void> RadioConfig::getSimSlotsStatus(int32_t serial) {
     if (mRadioConfigResponse != nullptr) {
         const hidl_vec<V1_0::SimSlotStatus> slotStatus{};
@@ -96,10 +96,14 @@ Return<void> RadioConfig::getPhoneCapability(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioConfig::setPreferredDataModem(int32_t serial, uint8_t /* modemId */) {
+Return<void> RadioConfig::setPreferredDataModem(int32_t serial, uint8_t modemId) {
     if (mRadioConfigResponseV1_1 != nullptr) {
-        checkResponse(mRadioConfigResponseV1_1->setPreferredDataModemResponse(
-            unsupportedResponse(serial)));
+        auto info = unsupportedResponse(serial);
+        // Single-SIM: modem 0 is already the preferred modem; no switch is needed.
+        if (modemId == 0) {
+            info.error = RadioError::NONE;  // SUCCESS in the framework.
+        }
+        checkResponse(mRadioConfigResponseV1_1->setPreferredDataModemResponse(info));
     }
     return Void();
 }

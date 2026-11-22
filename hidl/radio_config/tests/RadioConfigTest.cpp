@@ -61,13 +61,15 @@ void requestAll(RadioConfig& config, int32_t serial) {
     assert(config.setPreferredDataModem(serial, 1).isOk());
     assert(config.setModemsConfig(serial, {2}).isOk());
     assert(config.getModemsConfig(serial).isOk());
+    assert(config.setPreferredDataModem(serial, 0).isOk());
 }
 
-void checkReply(const Reply& reply, Method method, int32_t serial) {
+void checkReply(const Reply& reply, Method method, int32_t serial,
+                RadioError error = RadioError::REQUEST_NOT_SUPPORTED) {
     assert(reply.method == method);
     assert(reply.info.serial == serial);
     assert(reply.info.type == RadioResponseType::SOLICITED);
-    assert(reply.info.error == RadioError::REQUEST_NOT_SUPPORTED);
+    assert(reply.info.error == error);
 }
 
 int main() {
@@ -80,12 +82,22 @@ int main() {
                                 std::numeric_limits<int32_t>::max(), 12345}) {
         response->recorder.replies.clear();
         requestAll(config, serial);  // Colliding/repeated serials must each get a response.
-        assert(response->recorder.replies.size() == 6);
+        assert(response->recorder.replies.size() == 7);
         for (size_t i = 0; i < 6; ++i) {
             checkReply(response->recorder.replies[i], static_cast<Method>(i), serial);
         }
+        checkReply(response->recorder.replies[6], Method::DATA_MODEM, serial, RadioError::NONE);
     }
-    std::puts("Six solicited responses preserve boundary and colliding serials: PASS");
+    std::puts("Seven solicited responses preserve boundary and colliding serials: PASS");
+
+    for (uint16_t modemId = 0; modemId <= std::numeric_limits<uint8_t>::max(); ++modemId) {
+        response->recorder.replies.clear();
+        assert(config.setPreferredDataModem(12345, static_cast<uint8_t>(modemId)).isOk());
+        assert(response->recorder.replies.size() == 1);
+        checkReply(response->recorder.replies[0], Method::DATA_MODEM, 12345,
+                   modemId == 0 ? RadioError::NONE : RadioError::REQUEST_NOT_SUPPORTED);
+    }
+    std::puts("Single-SIM modem 0 succeeds; all nonzero modem IDs remain unsupported: PASS");
 
     auto legacy = std::make_shared<Response10>();
     assert(config.setResponseFunctions(legacy, nullptr).isOk());
@@ -115,10 +127,11 @@ int main() {
     response->recorder.replies.clear();
     const unsigned int beforeResponses = fakeLogCount;
     requestAll(config, 84);
-    assert(response->recorder.replies.size() == 6);
-    assert(fakeLogCount == beforeResponses + 6);  // All failed returns were checked/logged.
+    assert(response->recorder.replies.size() == 7);
+    assert(fakeLogCount == beforeResponses + 7);  // Includes the modem-0 success callback.
     for (size_t i = 0; i < 6; ++i) {
         checkReply(response->recorder.replies[i], static_cast<Method>(i), 84);
     }
+    checkReply(response->recorder.replies[6], Method::DATA_MODEM, 84, RadioError::NONE);
     std::puts("Cast/callback transport errors are handled without aborting: PASS");
 }
