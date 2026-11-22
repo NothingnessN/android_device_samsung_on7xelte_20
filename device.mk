@@ -232,6 +232,7 @@ PRODUCT_PACKAGES += \
     libsecril-client-sap \
     modemloader\
     rild \
+    librild_sdk27_shim \
     libreference-ril \
     libril \
     android.hardware.radio@1.0 \

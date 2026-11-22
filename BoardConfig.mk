@@ -251,6 +251,10 @@ TARGET_LD_SHIM_LIBS += \
     /system/lib/libsensorservice.so|libshims_libsensorservice.so \
     /system/vendor/lib/mediadrm/libwvdrmengine.so|libprotobuf-cpp-lite-v29.so
 
+# Match the executable, not libsec-ril.so: confine SDK 27 to rild.
+TARGET_LD_SHIM_LIBS += \
+    /vendor/bin/hw/rild|/system/lib/librild_sdk27_shim.so
+
 # Shim-OMX
 TARGET_LD_SHIM_LIBS += \
     /system/lib/libexynoscamera.so|/vendor/lib/libstagefright_shim.so \
