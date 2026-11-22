@@ -81,6 +81,9 @@ persist.sys.wfd.virtual=0
 # VNDK
 ro.vndk.version=current
 
+# Bluetooth audio (software encoding)
+ro.bluetooth.a2dp_offload.supported=false
+
 # Bluetooth profiles
 bluetooth.profile.a2dp.source.enabled=true
 bluetooth.profile.avrcp.controller.enabled=true
