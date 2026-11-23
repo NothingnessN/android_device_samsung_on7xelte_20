@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-#include <binder/ProcessState.h>
+#include <android/binder_process.h>
 #include <cutils/properties.h>
 #include <hidl/HidlTransportSupport.h>
 #include <hidl/LegacySupport.h>
@@ -45,9 +45,8 @@ static bool registerPassthroughServiceImplementations(Iter first, Iter last) {
 }
 
 int main(int /* argc */, char* /* argv */ []) {
-    ::android::ProcessState::initWithDriver("/dev/vndbinder");
-    // start a threadpool for vndbinder interactions
-    ::android::ProcessState::self()->startThreadPool();
+    // The software Bluetooth HAL probes stable AIDL services on system Binder.
+    ABinderProcess_startThreadPool();
 
     const int32_t defaultValue = -1;
     int32_t value =
