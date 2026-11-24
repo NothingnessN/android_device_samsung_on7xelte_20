@@ -1539,7 +1539,7 @@
 
 	<path name="gain-media-headset">
 		<ctl name="AudioMixer MIX1_LVL" value="0" />
-		<ctl name="DAC Gain" value="123" />
+		<ctl name="DAC Gain" value="122" />
 		<ctl name="Headphone Volume" value="36" />
 	</path>
 
