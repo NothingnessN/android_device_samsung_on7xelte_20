@@ -90,3 +90,4 @@ bluetooth.profile.avrcp.controller.enabled=true
 bluetooth.profile.avrcp.target.enabled=true
 bluetooth.profile.hfp.ag.enabled=true
 bluetooth.profile.hfp.hf.enabled=true
+bluetooth.profile.opp.enabled=true
